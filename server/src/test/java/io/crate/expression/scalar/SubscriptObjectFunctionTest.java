@@ -21,7 +21,9 @@
 
 package io.crate.expression.scalar;
 
+import io.crate.exceptions.ColumnUnknownException;
 import io.crate.expression.symbol.Literal;
+import io.crate.testing.Asserts;
 import org.junit.Test;
 
 import java.util.Map;
@@ -34,6 +36,14 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
     public void testEvaluate() throws Exception {
         assertEvaluate("subscript_obj({x=10}, 'x')", 10);
         assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'x'), 'y')", 10);
+
+        Asserts.assertThrowsMatches(
+            () -> assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null),
+            ColumnUnknownException.class,
+            "Column {x={y=10}}['y'] unknown"
+        );
+        sqlExpressions.setErrorOnUnknownObjectKey(false);
+        assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null);
     }
 
     @Test
@@ -41,6 +51,14 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
         assertNormalize("{\"x\" = 'test'}['x']", isLiteral("test"));
         assertNormalize("{\"x\" = { \"y\" = 'test'}}['x']['y']", isLiteral("test"));
         assertNormalize("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['y']['z']", isLiteral("test"));
+
+        Asserts.assertThrowsMatches(
+            () -> assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null),
+            ColumnUnknownException.class,
+            "Column {y={z=test}}['x'] unknown"
+        );
+        sqlExpressions.setErrorOnUnknownObjectKey(false);
+        assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null);
     }
 
     @Test
@@ -55,7 +73,7 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
 
     @Test
     public void testSubscriptOnObjectLiteralWithNonExistingKey() throws Exception {
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(ColumnUnknownException.class);
         assertEvaluate("subscript_obj(obj, 'y')", 10L, Literal.of(Map.of("x", 10L)));
     }
 

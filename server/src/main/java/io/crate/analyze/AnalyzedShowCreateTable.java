@@ -64,7 +64,7 @@ public class AnalyzedShowCreateTable implements AnalyzedStatement, AnalyzedRelat
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation) throws UnsupportedOperationException, ColumnUnknownException {
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException {
         throw new UnsupportedOperationException("Cannot use getField on " + getClass().getSimpleName());
     }
 

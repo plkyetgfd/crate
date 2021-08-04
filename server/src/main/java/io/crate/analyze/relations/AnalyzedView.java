@@ -85,8 +85,8 @@ public final class AnalyzedView implements AnalyzedRelation, FieldResolver {
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation) throws UnsupportedOperationException, ColumnUnknownException {
-        Symbol field = relation.getField(column, operation);
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException {
+        Symbol field = relation.getField(column, operation, errorOnUnknownObjectKey);
         if (field == null) {
             return null;
         }
@@ -122,6 +122,6 @@ public final class AnalyzedView implements AnalyzedRelation, FieldResolver {
         if (!field.relation().equals(name)) {
             throw new IllegalArgumentException(field + " does not belong to " + name);
         }
-        return relation.getField(field.column(), Operation.READ);
+        return relation.getField(field.column(), Operation.READ, true);
     }
 }

@@ -24,6 +24,7 @@ package io.crate.analyze.relations;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.RelationUnknown;
+import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
@@ -47,13 +48,29 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
     private final Map<RelationName, AnalyzedRelation> sources;
     private final ParentRelations parents;
     private final String defaultSchema;
+    private final boolean errorOnUnknownObjectKey;
 
     public FullQualifiedNameFieldProvider(Map<RelationName, AnalyzedRelation> sources,
                                           ParentRelations parents,
-                                          String defaultSchema) {
+                                          String defaultSchema,
+                                          boolean errorOnUnknownObjectKey) {
         this.sources = Objects.requireNonNull(sources, "Please provide a source map.");
         this.parents = Objects.requireNonNull(parents, "ParentRelations must not be null");
         this.defaultSchema = Objects.requireNonNull(defaultSchema, "Default schema must not be null");
+        this.errorOnUnknownObjectKey = errorOnUnknownObjectKey;
+    }
+
+    private Symbol getField(AnalyzedRelation sourceRelation, ColumnIdent columnIdent, Operation operation, boolean errorOnUnknownObjectKey) {
+        Symbol newField;
+        try {
+            newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
+        } catch (ColumnUnknownException | AmbiguousColumnException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            assert errorOnUnknownObjectKey == false : "errorOnUnknownObjectKey should not be true";
+            newField = Literal.NULL;
+        }
+        return newField;
     }
 
     @Override
@@ -97,7 +114,7 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
             tableNameMatched = true;
 
             AnalyzedRelation sourceRelation = entry.getValue();
-            Symbol newField = sourceRelation.getField(columnIdent, operation);
+            Symbol newField = getField(sourceRelation, columnIdent, operation, errorOnUnknownObjectKey);
             if (newField != null) {
                 if (lastField != null) {
                     throw new AmbiguousColumnException(columnIdent, newField);

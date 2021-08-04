@@ -156,7 +156,8 @@ public class RelationAnalyzer extends DefaultTraversalVisitor<AnalyzedRelation, 
             new FullQualifiedNameFieldProvider(
                 relationAnalysisContext.sources(),
                 relationAnalysisContext.parentSources(),
-                coordinatorTxnCtx.sessionContext().searchPath().currentSchema()),
+                coordinatorTxnCtx.sessionContext().searchPath().currentSchema(),
+                coordinatorTxnCtx.sessionContext().errorOnUnknownObjectKey()),
             new SubqueryAnalyzer(this, statementContext));
         ExpressionAnalysisContext expressionAnalysisContext = relationAnalysisContext.expressionAnalysisContext();
         SelectAnalysis selectAnalysis = new SelectAnalysis(
@@ -269,7 +270,8 @@ public class RelationAnalyzer extends DefaultTraversalVisitor<AnalyzedRelation, 
                     new FullQualifiedNameFieldProvider(
                         relationContext.sources(),
                         relationContext.parentSources(),
-                        coordinatorTxnCtx.sessionContext().searchPath().currentSchema()),
+                        coordinatorTxnCtx.sessionContext().searchPath().currentSchema(),
+                        coordinatorTxnCtx.sessionContext().errorOnUnknownObjectKey()),
                     new SubqueryAnalyzer(this, statementContext));
                 Expression expr;
                 if (joinCriteria instanceof JoinOn) {
@@ -324,11 +326,13 @@ public class RelationAnalyzer extends DefaultTraversalVisitor<AnalyzedRelation, 
             new FullQualifiedNameFieldProvider(
                 context.sources(),
                 context.parentSources(),
-                coordinatorTxnCtx.sessionContext().searchPath().currentSchema()),
+                coordinatorTxnCtx.sessionContext().searchPath().currentSchema(),
+                coordinatorTxnCtx.sessionContext().errorOnUnknownObjectKey()),
             new SubqueryAnalyzer(this, statementContext));
 
         ExpressionAnalysisContext expressionAnalysisContext = context.expressionAnalysisContext();
         expressionAnalysisContext.windows(node.getWindows());
+        expressionAnalysisContext.setErrorOnUnknownObjectKey(statementContext.sessionContext().errorOnUnknownObjectKey());
 
         SelectAnalysis selectAnalysis = SelectAnalyzer.analyzeSelectItems(
             node.getSelect().getSelectItems(),

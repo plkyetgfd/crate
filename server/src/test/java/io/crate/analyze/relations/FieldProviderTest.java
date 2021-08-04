@@ -58,7 +58,8 @@ public class FieldProviderTest extends ESTestCase {
         return new FullQualifiedNameFieldProvider(
             relations,
             ParentRelations.NO_PARENTS,
-            Schemas.DOC_SCHEMA_NAME
+            Schemas.DOC_SCHEMA_NAME,
+            true
         );
     }
 

@@ -54,7 +54,7 @@ public class NameFieldProvider implements FieldProvider<Symbol> {
                 "A column must not have a schema or a table here.", qualifiedName));
         }
 
-        Symbol field = relation.getField(columnIdent, operation);
+        Symbol field = relation.getField(columnIdent, operation, true);
         if (field == null) {
             throw new ColumnUnknownException(columnIdent.sqlFqn(), relation.relationName());
         }

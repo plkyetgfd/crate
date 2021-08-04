@@ -842,6 +842,8 @@ public class ExpressionAnalyzer {
                 try {
                     return fieldProvider.resolveField(name, path, operation);
                 } catch (ColumnUnknownException e) {
+                    //--------- this causes the following to pass : CREATE TABLE tbl (obj object); select (obj).y from tbl;
+                    //------------ but this would cause storage to be parsed
                     var baseSymbol = fieldProvider.resolveField(name, List.of(), operation);
                     var subscriptFunction = SubscriptFunctions.tryCreateSubscript(baseSymbol, path);
                     if (subscriptFunction == null) {

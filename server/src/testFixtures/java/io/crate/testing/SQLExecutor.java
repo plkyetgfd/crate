@@ -735,15 +735,18 @@ public class SQLExecutor {
             new FullQualifiedNameFieldProvider(
                 sources.immutableMap(),
                 ParentRelations.NO_PARENTS,
-                sessionContext.searchPath().currentSchema()
+                sessionContext.searchPath().currentSchema(),
+                sessionContext.errorOnUnknownObjectKey()
             ),
             new SubqueryAnalyzer(
                 relAnalyzer,
                 new StatementAnalysisContext(ParamTypeHints.EMPTY, Operation.READ, coordinatorTxnCtx)
             )
         );
+        ExpressionAnalysisContext expressionAnalysisContext = new ExpressionAnalysisContext();
+        expressionAnalysisContext.setErrorOnUnknownObjectKey(sessionContext.errorOnUnknownObjectKey());
         return expressionAnalyzer.convert(
-            SqlParser.createExpression(expression), new ExpressionAnalysisContext());
+            SqlParser.createExpression(expression), expressionAnalysisContext);
     }
 
     public <T> T plan(String statement, UUID jobId, int fetchSize) {

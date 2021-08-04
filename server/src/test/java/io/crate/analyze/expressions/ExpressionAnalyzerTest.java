@@ -39,6 +39,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.crate.exceptions.AmbiguousColumnException;
+import io.crate.exceptions.ColumnUnknownException;
 import org.joda.time.Period;
 import org.junit.Before;
 import org.junit.Test;
@@ -134,7 +136,10 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
             coordinatorTxnCtx,
             expressions.nodeCtx,
             paramTypeHints,
-            new FullQualifiedNameFieldProvider(sources, ParentRelations.NO_PARENTS, sessionContext.searchPath().currentSchema()),
+            new FullQualifiedNameFieldProvider(sources,
+                                               ParentRelations.NO_PARENTS,
+                                               sessionContext.searchPath().currentSchema(),
+                                               sessionContext.errorOnUnknownObjectKey()),
             null
         );
         Function andFunction = (Function) expressionAnalyzer.convert(
@@ -388,5 +393,234 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
             ConversionException.class,
             "Cannot cast object element `x` with value `foo` to type `integer`"
         );
+    }
+
+    /* not meant to be checked-in, should only be used for development purposes */
+    @Test
+    public void test_visitSubscriptExpression_with_errorOnUnknownObjectKey() throws IOException {
+
+        /*
+         * create table d8 (a int);
+         * select unknown['u'] from d8; --> ColumnUnknownException
+         * set errorOnUnknownObjectKey = false;
+         * select unknown['u'] from d8; --> ColumnUnknownException
+         */
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE d8 (a int)")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select unknown['u'] from d8"),
+            ColumnUnknownException.class,
+            "Column unknown['u'] unknown"
+        );
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select unknown['u'] from d8"),
+            ColumnUnknownException.class,
+            "Column unknown['u'] unknown"
+        );
+
+        /*
+         * CREATE TABLE d5 (obj object, obj_n object as (obj_n2 object));
+         * select obj['u']             from d5; --> ColumnUnknownException
+         * select obj_n['obj_n2']['u'] from d5; --> ColumnUnknownException
+         * set errorOnUnknownObjectKey = false;
+         * select obj['u']             from d5; --> works
+         * select obj_n['obj_n2']['u'] from d5; --> works
+         */
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE d5 (obj object, obj_n object as (obj_n2 object))")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj['u'] from d5"),
+            ColumnUnknownException.class,
+            "Column obj['u'] unknown"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_n['obj_n2']['u'] from d5"),
+            ColumnUnknownException.class,
+            "Column obj_n['obj_n2']['u'] unknown"
+        );
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("select obj['u'] from d5");
+        executor.analyze("select obj_n['obj_n2']['u'] from d5");
+
+        /*
+         * CREATE TABLE d6 (obj object(dynamic));
+         * select (obj).y from d6; --> works --> existing bug *******************************************************************************************
+         * set errorOnUnknownObjectKey = false;
+         * select (obj).y from d6; --> works
+         */
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE d6 (obj object(dynamic))")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        executor.analyze("select (obj).y from d6");
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("select (obj).y from d6");
+
+        /*
+         * select ('{}'::object).x; --> ColumnUnknownException
+         * set errorOnUnknownObjectKey = false;
+         * select ('{}'::object).x; --> works
+         */
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select ('{}'::object).x"),
+            ColumnUnknownException.class,
+            "Column {}['x'] unknown"
+        );
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("select ('{}'::object).x");
+
+        /*
+         * SELECT ''::OBJECT['x']; --> ColumnUnknownException
+         * set errorOnUnknownObjectKey = false;
+         * SELECT ''::OBJECT['x']; --> works
+         */
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("SELECT ''::OBJECT['x']"),
+            ColumnUnknownException.class,
+            "Column {}['x'] unknown"
+        );
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("SELECT ''::OBJECT['x']");
+
+        /*
+         * SELECT [col1,col1]['x'] FROM UNNEST(['{"x":1,"y":2}','{"y":2,"z":3}']::ARRAY(OBJECT)) --> works --> existing bug ********************************
+         * set errorOnUnknownObjectKey = false;
+         * SELECT [col1,col1]['x'] FROM UNNEST(['{"x":1,"y":2}','{"y":2,"z":3}']::ARRAY(OBJECT)) --> works
+         */
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        executor.analyze("SELECT [col1,col1]['x'] FROM UNNEST(['{\"x\":1,\"y\":2}','{\"y\":2,\"z\":3}']::ARRAY(OBJECT))");
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("SELECT [col1,col1]['x'] FROM UNNEST(['{\"x\":1,\"y\":2}','{\"y\":2,\"z\":3}']::ARRAY(OBJECT))");
+
+        /*
+         * CREATE TABLE c1 (obj_dynamic object (dynamic) as (x int))
+         * CREATE TABLE c2 (obj_dynamic object (dynamic) as (y int))
+         *
+         * select obj_dynamic      from c1, c2 --> AmbiguousColumnException
+         * select obj_dynamic['x'] from c1, c2 --> works
+         * select obj_dynamic['y'] from c1, c2 --> works
+         * select obj_dynamic['z'] from c1, c2 --> AmbiguousColumnException
+         * set errorOnUnknownObjectKey = false;
+         * select obj_dynamic      from c1, c2 --> AmbiguousColumnException
+         * select obj_dynamic['x'] from c1, c2 --> AmbiguousColumnException  --> is this expected behaviour?
+         * select obj_dynamic['y'] from c1, c2 --> AmbiguousColumnException  --> is this expected behaviour?
+         * select obj_dynamic['z'] from c1, c2 --> AmbiguousColumnException  --> is this expected behaviour?
+         */
+
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE c1 (obj_dynamic object (dynamic) as (x int))")
+            .addTable("CREATE TABLE c2 (obj_dynamic object (dynamic) as (y int))")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic\" is ambiguous"
+        );
+        executor.analyze("select obj_dynamic['x'] from c1, c2");
+        executor.analyze("select obj_dynamic['y'] from c1, c2");
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic['z'] from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic\" is ambiguous"
+        );
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic['x'] from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic['x']\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic['y'] from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic['y']\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_dynamic['z'] from c1, c2"),
+            AmbiguousColumnException.class,
+            "Column \"obj_dynamic['z']\" is ambiguous"
+        );
+
+        /*
+         * CREATE TABLE c3 (obj_ignored object (ignored))
+         * CREATE TABLE c4 (obj_ignored object (ignored))
+         *
+         * select obj_ignored      from c3, c4 --> AmbiguousColumnException
+         * select obj_ignored['x'] from c3, c4 --> AmbiguousColumnException
+         * select obj_ignored['y'] from c3, c4 --> AmbiguousColumnException
+         * set errorOnUnknownObjectKey = false
+         * select obj_ignored      from c3, c4 --> AmbiguousColumnException
+         * select obj_ignored['x'] from c3, c4 --> AmbiguousColumnException
+         * select obj_ignored['y'] from c3, c4 --> AmbiguousColumnException
+         */
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE c3 (obj_ignored object (ignored) as (x int))")
+            .addTable("CREATE TABLE c4 (obj_ignored object (ignored) as (y int))")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored['x'] from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored['x']\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored['y'] from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored['y']\" is ambiguous"
+        );
+
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored['x'] from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored['x']\" is ambiguous"
+        );
+        Asserts.assertThrowsMatches(
+            () -> executor.analyze("select obj_ignored['y'] from c3, c4"),
+            AmbiguousColumnException.class,
+            "Column \"obj_ignored['y']\" is ambiguous"
+        );
+
+        /*
+         * CREATE TABLE e1 (obj_dy object, obj_st object(strict))
+         *
+         * select obj_dy['missing_key'] from (select obj_dy from e1) alias; --> works ------> bug
+         * select obj_st['missing_key'] from (select obj_st from e1) alias; --> works ------> bug
+         * set errorOnUnknownObjectKey = false
+         * select obj_dy['missing_key'] from (select obj_dy from e1) alias; --> works ------> bug but cannot fix
+         * select obj_st['missing_key'] from (select obj_st from e1) alias; --> works ---> expected
+         */
+        SQLExecutor.builder(clusterService)
+            .addTable("CREATE TABLE e1 (obj_dy object, obj_st object(strict))")
+            .build();
+        executor.getSessionContext().setErrorOnUnknownObjectKey(true);
+        executor.analyze("select obj_dy['missing_key'] from (select obj_dy from e1) alias");
+        executor.analyze("select obj_st['missing_key'] from (select obj_st from e1) alias");
+
+        executor.getSessionContext().setErrorOnUnknownObjectKey(false);
+        executor.analyze("select obj_dy['missing_key'] from (select obj_dy from e1) alias");
+        executor.analyze("select obj_st['missing_key'] from (select obj_st from e1) alias");
     }
 }

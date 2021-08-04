@@ -21,6 +21,7 @@
 
 package io.crate.metadata.doc;
 
+import io.crate.exceptions.ColumnUnknownException;
 import io.crate.expression.symbol.DynamicReference;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.Reference;
@@ -30,6 +31,7 @@ import io.crate.metadata.RowGranularity;
 import io.crate.metadata.Schemas;
 import io.crate.metadata.table.Operation;
 import io.crate.sql.tree.ColumnPolicy;
+import io.crate.testing.Asserts;
 import org.elasticsearch.test.ESTestCase;
 import io.crate.types.DataTypes;
 import org.elasticsearch.Version;
@@ -140,13 +142,18 @@ public class DocTableInfoTest extends ESTestCase {
         );
 
 
-        ColumnIdent columnIdent = new ColumnIdent("foobar", Arrays.asList("foo", "bar"));
-        assertNull(info.getReference(columnIdent));
-        assertNull(info.getDynamic(columnIdent, false));
+        ColumnIdent columnIdent1 = new ColumnIdent("foobar", Arrays.asList("foo", "bar"));
+        assertNull(info.getReference(columnIdent1));
+        assertNull(info.getDynamic(columnIdent1, false));
 
-        columnIdent = new ColumnIdent("foobar", Collections.singletonList("foo"));
-        assertNull(info.getReference(columnIdent));
-        assertNull(info.getDynamic(columnIdent, false));
+        ColumnIdent columnIdent2 = new ColumnIdent("foobar", Collections.singletonList("foo"));
+        assertNull(info.getReference(columnIdent2));
+        assertNull(info.getDynamic(columnIdent2, false));
+        Asserts.assertThrowsMatches(
+            () -> assertNull(info.getDynamic(columnIdent2, true)),
+            ColumnUnknownException.class,
+            "Column foobar['foo'] unknown"
+        );
 
         Reference colInfo = info.getReference(new ColumnIdent("foobar"));
         assertNotNull(colInfo);

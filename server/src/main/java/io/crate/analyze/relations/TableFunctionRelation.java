@@ -83,7 +83,7 @@ public class TableFunctionRelation implements AnalyzedRelation, FieldResolver {
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation) throws UnsupportedOperationException {
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException {
         for (Symbol output : outputs) {
             ColumnIdent outputColumn = Symbols.pathFromSymbol(output);
             if (column.equals(outputColumn)) {
@@ -124,7 +124,7 @@ public class TableFunctionRelation implements AnalyzedRelation, FieldResolver {
     @Nullable
     @Override
     public Symbol resolveField(ScopedSymbol field) {
-        return getField(field.column(), Operation.READ);
+        return getField(field.column(), Operation.READ, true);
     }
 
     @Override

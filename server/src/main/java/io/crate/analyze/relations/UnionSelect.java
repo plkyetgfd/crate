@@ -70,7 +70,7 @@ public class UnionSelect implements AnalyzedRelation {
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation) throws UnsupportedOperationException, ColumnUnknownException {
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException {
         for (var output : outputs) {
             if (output.column().equals(column)) {
                 return output;

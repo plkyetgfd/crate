@@ -40,6 +40,7 @@ public class ExpressionAnalysisContext {
 
     private boolean hasAggregates;
     private boolean allowEagerNormalize = true;
+    private boolean errorOnUnknownObjectKey = true;
 
     private Map<String, Window> windows = Map.of();
 
@@ -65,6 +66,14 @@ public class ExpressionAnalysisContext {
 
     public Map<String, Window> windows() {
         return windows;
+    }
+
+    public void setErrorOnUnknownObjectKey(boolean errorOnUnknownObjectKey) {
+        this.errorOnUnknownObjectKey = errorOnUnknownObjectKey;
+    }
+
+    public boolean errorOnUnknownObjectKey() {
+        return errorOnUnknownObjectKey;
     }
 
     /**

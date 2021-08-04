@@ -41,7 +41,7 @@ public class TableRelation extends AbstractTableRelation<TableInfo> {
     }
 
     @Override
-    public Reference getField(ColumnIdent column, Operation operation) throws ColumnUnknownException {
+    public Reference getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws ColumnUnknownException {
         switch (operation) {
             case READ:
             case UPDATE:

@@ -159,7 +159,8 @@ class InsertAnalyzer {
                 new FullQualifiedNameFieldProvider(
                     sources,
                     ParentRelations.NO_PARENTS,
-                    txnCtx.sessionContext().searchPath().currentSchema()
+                    txnCtx.sessionContext().searchPath().currentSchema(),
+                    txnCtx.sessionContext().errorOnUnknownObjectKey()
                 ),
                 null
             );

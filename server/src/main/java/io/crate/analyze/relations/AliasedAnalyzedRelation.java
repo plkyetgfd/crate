@@ -85,7 +85,7 @@ public class AliasedAnalyzedRelation implements AnalyzedRelation, FieldResolver 
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation) throws UnsupportedOperationException, ColumnUnknownException {
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException {
         if (operation != Operation.READ) {
             throw new UnsupportedOperationException(operation + " is not supported on " + alias);
         }
@@ -109,7 +109,7 @@ public class AliasedAnalyzedRelation implements AnalyzedRelation, FieldResolver 
                 childColumnName = new ColumnIdent(childColumnName.name(), column.path());
             }
         }
-        Symbol field = relation.getField(childColumnName, operation);
+        Symbol field = relation.getField(childColumnName, operation, errorOnUnknownObjectKey);
         if (field == null) {
             return null;
         }
@@ -165,7 +165,7 @@ public class AliasedAnalyzedRelation implements AnalyzedRelation, FieldResolver 
         }
         assert childColumnName != null
             : "If a ScopedSymbol has been retrieved via `getField`, it must be possible to get the columnIdent";
-        var result = relation.getField(childColumnName, Operation.READ);
+        var result = relation.getField(childColumnName, Operation.READ, true);
         if (result == null) {
             throw new IllegalArgumentException(field + " does not belong to " + relationName());
         }

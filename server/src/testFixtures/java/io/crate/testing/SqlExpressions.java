@@ -81,7 +81,8 @@ public class SqlExpressions {
             new FullQualifiedNameFieldProvider(
                 sources,
                 ParentRelations.NO_PARENTS,
-                coordinatorTxnCtx.sessionContext().searchPath().currentSchema()),
+                coordinatorTxnCtx.sessionContext().searchPath().currentSchema(),
+                coordinatorTxnCtx.sessionContext().errorOnUnknownObjectKey()),
             new SubqueryAnalyzer(
                 new RelationAnalyzer(nodeCtx, mock(Schemas.class)),
                 new StatementAnalysisContext(ParamTypeHints.EMPTY, Operation.READ, coordinatorTxnCtx)
@@ -109,5 +110,10 @@ public class SqlExpressions {
 
     public void setSearchPath(String... schemas) {
         this.coordinatorTxnCtx.sessionContext().setSearchPath(schemas);
+    }
+
+    public void setErrorOnUnknownObjectKey(boolean errorOnUnknownObjectKey) {
+        this.coordinatorTxnCtx.sessionContext().setErrorOnUnknownObjectKey(errorOnUnknownObjectKey);
+        this.expressionAnalysisCtx.setErrorOnUnknownObjectKey(errorOnUnknownObjectKey);
     }
 }
