@@ -21,7 +21,9 @@
 
 package io.crate.analyze.relations;
 
+import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
+import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.Reference;
 import io.crate.metadata.table.Operation;
@@ -41,7 +43,7 @@ public class TableRelation extends AbstractTableRelation<TableInfo> {
     }
 
     @Override
-    public Reference getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws ColumnUnknownException {
+    public Reference getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
         switch (operation) {
             case READ:
             case UPDATE:

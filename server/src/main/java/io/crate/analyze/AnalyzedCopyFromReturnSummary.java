@@ -23,7 +23,9 @@ package io.crate.analyze;
 
 import io.crate.analyze.relations.AnalyzedRelation;
 import io.crate.analyze.relations.AnalyzedRelationVisitor;
+import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
+import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.ScopedSymbol;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
@@ -66,7 +68,7 @@ public class AnalyzedCopyFromReturnSummary extends AnalyzedCopyFrom implements A
     }
 
     @Override
-    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException {
+    public Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
         throw new UnsupportedOperationException("Cannot use getField on " + getClass().getSimpleName());
     }
 

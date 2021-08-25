@@ -24,6 +24,7 @@ package io.crate.metadata.doc;
 import io.crate.action.sql.SessionContext;
 import io.crate.analyze.WhereClause;
 import io.crate.exceptions.ColumnUnknownException;
+import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.DynamicReference;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
@@ -406,12 +407,14 @@ public class DocTableInfo implements TableInfo, ShardedTable, StoredTable {
     }
 
     @Nullable
-    public DynamicReference getDynamic(ColumnIdent ident, boolean forWrite) {
+    public DynamicReference getDynamic(ColumnIdent ident, boolean forWrite) throws ColumnUnknownException {
         return getDynamic(ident, forWrite, true);
     }
 
     @Nullable
-    public DynamicReference getDynamic(ColumnIdent ident, boolean forWrite, boolean errorOnUnknownObjectKey) {
+    public DynamicReference getDynamic(ColumnIdent ident,
+                                       boolean forWrite,
+                                       boolean errorOnUnknownObjectKey) throws UnknownObjectKeyExceptionalControlFlow, ColumnUnknownException {
         boolean parentIsIgnored = false;
         ColumnPolicy parentPolicy = columnPolicy();
         int position = 0;
@@ -438,7 +441,7 @@ public class DocTableInfo implements TableInfo, ShardedTable, StoredTable {
             case DYNAMIC:
                 if (!forWrite) {
                     if (errorOnUnknownObjectKey == false) {
-                        throw new RuntimeException("throw in order to unwind the nest calls to sourceRelation.getField");
+                        throw new UnknownObjectKeyExceptionalControlFlow();
                     }
                     return null;
                 }

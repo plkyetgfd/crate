@@ -23,7 +23,9 @@ package io.crate.analyze.relations;
 
 import io.crate.analyze.AnalyzedStatement;
 import io.crate.analyze.AnalyzedStatementVisitor;
+import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
+import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
@@ -67,7 +69,7 @@ public interface AnalyzedRelation extends AnalyzedStatement {
      * </p>
      */
     @Nullable
-    Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws UnsupportedOperationException, ColumnUnknownException;
+    Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException;
 
     RelationName relationName();
 

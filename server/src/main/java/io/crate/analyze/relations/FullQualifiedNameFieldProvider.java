@@ -24,6 +24,7 @@ package io.crate.analyze.relations;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.RelationUnknown;
+import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
@@ -60,13 +61,11 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
         this.errorOnUnknownObjectKey = errorOnUnknownObjectKey;
     }
 
-    private Symbol getField(AnalyzedRelation sourceRelation, ColumnIdent columnIdent, Operation operation, boolean errorOnUnknownObjectKey) {
+    private Symbol getField(AnalyzedRelation sourceRelation, ColumnIdent columnIdent, Operation operation) {
         Symbol newField;
         try {
             newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
-        } catch (ColumnUnknownException | AmbiguousColumnException e) {
-            throw e;
-        } catch (RuntimeException e) {
+        } catch (UnknownObjectKeyExceptionalControlFlow e) {
             assert errorOnUnknownObjectKey == false : "errorOnUnknownObjectKey should not be true";
             newField = Literal.NULL;
         }
@@ -114,7 +113,7 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
             tableNameMatched = true;
 
             AnalyzedRelation sourceRelation = entry.getValue();
-            Symbol newField = getField(sourceRelation, columnIdent, operation, errorOnUnknownObjectKey);
+            Symbol newField = getField(sourceRelation, columnIdent, operation);
             if (newField != null) {
                 if (lastField != null) {
                     throw new AmbiguousColumnException(columnIdent, newField);
