@@ -22,11 +22,18 @@
 
 package io.crate.exceptions;
 
+import java.util.Locale;
+
 /**
  * This is not a traditional exception, but is an exception as control flow that is used during subscript expression analyses.
  * Thrown from Tableinfo.getDynamics and caught by FullQualifiedNameFieldProvider.getField for instant stack unwinding.
  */
 public class UnknownObjectKeyExceptionalControlFlow extends RuntimeException implements CrateException {
+
+    public UnknownObjectKeyExceptionalControlFlow(String columnName) {
+        super(String.format(Locale.ENGLISH, "Column %s unknown", columnName));
+    }
+
     @Override
     public <C, R> R accept(CrateExceptionVisitor<C, R> exceptionVisitor, C context) {
         return exceptionVisitor.visitCrateException(this, context);

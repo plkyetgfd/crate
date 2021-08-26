@@ -237,7 +237,7 @@ class InsertAnalyzer {
             Reference reference = targetTable.getReference(columnIdent);
             Reference targetReference;
             if (reference == null) {
-                DynamicReference dynamicReference = targetTable.getDynamic(columnIdent, true);
+                DynamicReference dynamicReference = targetTable.getDynamic(columnIdent, true, true);
                 if (dynamicReference == null) {
                     throw new ColumnUnknownException(targetColumnName, targetTable.ident());
                 }

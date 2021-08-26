@@ -35,6 +35,11 @@ public class ColumnUnknownException extends ResourceUnknownException implements 
         this.relationName = relationName;
     }
 
+    public ColumnUnknownException(String message) {
+        super(message);
+        this.relationName = null;
+    }
+
     @Override
     public Iterable<RelationName> getTableIdents() {
         return Collections.singletonList(relationName);

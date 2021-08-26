@@ -50,6 +50,11 @@ public class FieldProviderTest extends ESTestCase {
     }
 
     private static FullQualifiedNameFieldProvider newFQFieldProvider(Map<QualifiedName, AnalyzedRelation> sources) {
+        return newFQFieldProvider(sources, true);
+    }
+
+    private static FullQualifiedNameFieldProvider newFQFieldProvider(Map<QualifiedName,AnalyzedRelation> sources,
+                                                                     boolean errorOnUnknownObjectKey) {
         Map<RelationName, AnalyzedRelation> relations = sources.entrySet().stream()
             .collect(Collectors.toMap(
                 entry -> RelationName.of(entry.getKey(), "doc"),
@@ -59,7 +64,7 @@ public class FieldProviderTest extends ESTestCase {
             relations,
             ParentRelations.NO_PARENTS,
             Schemas.DOC_SCHEMA_NAME,
-            true
+            errorOnUnknownObjectKey
         );
     }
 

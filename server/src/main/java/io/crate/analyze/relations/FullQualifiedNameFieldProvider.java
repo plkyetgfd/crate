@@ -25,6 +25,7 @@ import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.RelationUnknown;
 import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
+import io.crate.expression.symbol.AliasSymbol;
 import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
@@ -61,19 +62,12 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
         this.errorOnUnknownObjectKey = errorOnUnknownObjectKey;
     }
 
-    private Symbol getField(AnalyzedRelation sourceRelation, ColumnIdent columnIdent, Operation operation) {
-        Symbol newField;
-        try {
-            newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
-        } catch (UnknownObjectKeyExceptionalControlFlow e) {
-            assert errorOnUnknownObjectKey == false : "errorOnUnknownObjectKey should not be true";
-            newField = Literal.NULL;
-        }
-        return newField;
-    }
-
     @Override
     public Symbol resolveField(QualifiedName qualifiedName, @Nullable List<String> path, Operation operation) {
+        return resolveField(qualifiedName, path, operation, this.errorOnUnknownObjectKey);
+    }
+
+    public Symbol resolveField(QualifiedName qualifiedName, @Nullable List<String> path, Operation operation, boolean errorOnUnknownObjectKey) {
         List<String> parts = qualifiedName.getParts();
         String columnSchema = null;
         String columnTableName = null;
@@ -113,9 +107,23 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
             tableNameMatched = true;
 
             AnalyzedRelation sourceRelation = entry.getValue();
-            Symbol newField = getField(sourceRelation, columnIdent, operation);
+            Symbol newField;
+            try {
+                newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
+            } catch (UnknownObjectKeyExceptionalControlFlow e) {
+                assert errorOnUnknownObjectKey == false : "errorOnUnknownObjectKey should not be true";
+                newField = new AliasSymbol(columnIdent.toString(), Literal.NULL);
+            }
             if (newField != null) {
                 if (lastField != null) {
+                    if (errorOnUnknownObjectKey == false) {
+                        /* ex) CREATE TABLE c1 (obj object as (x int));
+                         *     CREATE TABLE c2 (obj object as (y int));
+                         *     select obj['x'] from c1, c2;
+                         *     --> ambiguous because with the ColumnUnknownException suppressed, c2.obj['x'] is a candidate as well.
+                         */
+                        return resolveField(qualifiedName, path, operation, true);
+                    }
                     throw new AmbiguousColumnException(columnIdent, newField);
                 }
                 lastField = newField;

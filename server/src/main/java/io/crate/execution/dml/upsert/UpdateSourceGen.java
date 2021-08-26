@@ -23,12 +23,14 @@ package io.crate.execution.dml.upsert;
 
 import io.crate.common.collections.Maps;
 import io.crate.data.Input;
+import io.crate.exceptions.ColumnUnknownException;
 import io.crate.execution.engine.collect.CollectExpression;
 import io.crate.expression.BaseImplementationSymbolVisitor;
 import io.crate.expression.InputFactory;
 import io.crate.expression.reference.Doc;
 import io.crate.expression.reference.DocRefResolver;
 import io.crate.expression.reference.ReferenceResolver;
+import io.crate.expression.symbol.DynamicReference;
 import io.crate.expression.symbol.InputColumn;
 import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
@@ -88,7 +90,15 @@ final class UpdateSourceGen {
         for (String updateColumn : updateColumns) {
             ColumnIdent column = ColumnIdent.fromPath(updateColumn);
             Reference ref = table.getReference(column);
-            this.updateColumns.add(ref == null ? table.getDynamic(column, true) : ref);
+            if (ref != null) {
+                this.updateColumns.add(ref);
+            } else {
+                DynamicReference dynamicReference = table.getDynamic(column, true, true);
+                if (dynamicReference == null) {
+                    throw new ColumnUnknownException(updateColumn,table.ident());
+                }
+                this.updateColumns.add(dynamicReference);
+            }
         }
         if (table.generatedColumns().isEmpty()) {
             generatedColumns = GeneratedColumns.empty();

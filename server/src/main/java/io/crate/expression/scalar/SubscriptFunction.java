@@ -199,7 +199,7 @@ public class SubscriptFunction extends Scalar<Object, Object[]> {
         }
         Map<?, ?> map = (Map<?, ?>) base;
         if (errorOnUnknownObjectKey && !map.containsKey(name)) {
-            throw new ColumnUnknownException(base + "['" + name + "']", null);
+            throw new ColumnUnknownException("The object `" + base + "` does not contain the key `" + name + "`");
         }
         return map.get(name);
     }

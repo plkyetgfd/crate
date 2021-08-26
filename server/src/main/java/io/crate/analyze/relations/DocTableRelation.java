@@ -63,9 +63,7 @@ public class DocTableRelation extends AbstractTableRelation<DocTableInfo> {
     }
 
     @Override
-    public Reference getField(ColumnIdent column,
-                           Operation operation,
-                           boolean errorOnUnknownObjectKey)
+    public Reference getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey)
         throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
         if (operation == Operation.UPDATE) {
             ensureColumnCanBeUpdated(column);
