@@ -21,6 +21,7 @@
 
 package io.crate.metadata.doc;
 
+import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.DynamicReference;
 import io.crate.metadata.ColumnIdent;
@@ -164,13 +165,21 @@ public class DocTableInfoTest extends ESTestCase {
         assertNull(info.getDynamic(columnIdent, false, true));
 
         // forWrite: true, errorOnUnknownObjectKey: true, parentPolicy: strict
-        assertNull(info.getDynamic(columnIdent, true, true));
+        Asserts.assertThrowsMatches(
+            () -> info.getDynamic(columnIdent, true, true),
+            ColumnUnknownException.class,
+            "Column foobar['foo']['bar'] unknown"
+        );
 
         // forWrite: false, errorOnUnknownObjectKey: false, parentPolicy: strict
         assertNull(info.getDynamic(columnIdent, false, false));
 
         // forWrite: true, errorOnUnknownObjectKey: false, parentPolicy: strict
-        assertNull(info.getDynamic(columnIdent, true, false));
+        Asserts.assertThrowsMatches(
+            () -> assertNull(info.getDynamic(columnIdent, true, false)),
+            ColumnUnknownException.class,
+            "Column foobar['foo']['bar'] unknown"
+        );
 
         final ColumnIdent columnIdent2 = new ColumnIdent("foobar", Collections.singletonList("foo"));
         assertNull(info.getReference(columnIdent2));
@@ -179,13 +188,21 @@ public class DocTableInfoTest extends ESTestCase {
         assertNull(info.getDynamic(columnIdent2, false, true));
 
         // forWrite: true, errorOnUnknownObjectKey: true, parentPolicy: strict
-        assertNull(info.getDynamic(columnIdent2, true, true));
+        Asserts.assertThrowsMatches(
+            () -> assertNull(info.getDynamic(columnIdent2, true, true)),
+            ColumnUnknownException.class,
+            "Column foobar['foo'] unknown"
+        );
 
         // forWrite: false, errorOnUnknownObjectKey: false, parentPolicy: strict
         assertNull(info.getDynamic(columnIdent2, false, false));
 
         // forWrite: true, errorOnUnknownObjectKey: false, parentPolicy: strict
-        assertNull(info.getDynamic(columnIdent2, true, false));
+        Asserts.assertThrowsMatches(
+            () -> assertNull(info.getDynamic(columnIdent2, true, false)),
+            ColumnUnknownException.class,
+            "Column foobar['foo'] unknown"
+        );
 
         Reference colInfo = info.getReference(new ColumnIdent("foobar"));
         assertNotNull(colInfo);

@@ -124,6 +124,6 @@ public final class AnalyzedView implements AnalyzedRelation, FieldResolver {
         if (!field.relation().equals(name)) {
             throw new IllegalArgumentException(field + " does not belong to " + name);
         }
-        return relation.getField(field.column(), Operation.READ, true);
+        return relation.getField(field.column(), Operation.READ);
     }
 }

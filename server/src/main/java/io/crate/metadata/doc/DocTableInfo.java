@@ -23,6 +23,7 @@ package io.crate.metadata.doc;
 
 import io.crate.action.sql.SessionContext;
 import io.crate.analyze.WhereClause;
+import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.DynamicReference;
 import io.crate.expression.symbol.Symbol;
@@ -441,6 +442,7 @@ public class DocTableInfo implements TableInfo, ShardedTable, StoredTable {
                 }
                 break;
             case STRICT:
+                if (forWrite) throw new ColumnUnknownException(ident.sqlFqn(), ident());
                 return null;
             case IGNORED:
                 parentIsIgnored = true;

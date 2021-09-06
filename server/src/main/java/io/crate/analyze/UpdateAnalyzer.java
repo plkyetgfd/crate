@@ -112,8 +112,7 @@ public final class UpdateAnalyzer {
             new FullQualifiedNameFieldProvider(
                 relCtx.sources(),
                 relCtx.parentSources(),
-                txnCtx.sessionContext().searchPath().currentSchema(),
-                txnCtx.sessionContext().errorOnUnknownObjectKey()
+                txnCtx.sessionContext().searchPath().currentSchema()
             ),
             subqueryAnalyzer
         );

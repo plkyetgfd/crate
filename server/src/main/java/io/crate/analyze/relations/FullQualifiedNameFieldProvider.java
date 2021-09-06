@@ -50,23 +50,16 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
     private final Map<RelationName, AnalyzedRelation> sources;
     private final ParentRelations parents;
     private final String defaultSchema;
-    private final boolean errorOnUnknownObjectKey;
 
     public FullQualifiedNameFieldProvider(Map<RelationName, AnalyzedRelation> sources,
                                           ParentRelations parents,
-                                          String defaultSchema,
-                                          boolean errorOnUnknownObjectKey) {
+                                          String defaultSchema) {
         this.sources = Objects.requireNonNull(sources, "Please provide a source map.");
         this.parents = Objects.requireNonNull(parents, "ParentRelations must not be null");
         this.defaultSchema = Objects.requireNonNull(defaultSchema, "Default schema must not be null");
-        this.errorOnUnknownObjectKey = errorOnUnknownObjectKey;
     }
 
     @Override
-    public Symbol resolveField(QualifiedName qualifiedName, @Nullable List<String> path, Operation operation) {
-        return resolveField(qualifiedName, path, operation, this.errorOnUnknownObjectKey);
-    }
-
     public Symbol resolveField(QualifiedName qualifiedName, @Nullable List<String> path, Operation operation, boolean errorOnUnknownObjectKey) {
         List<String> parts = qualifiedName.getParts();
         String columnSchema = null;

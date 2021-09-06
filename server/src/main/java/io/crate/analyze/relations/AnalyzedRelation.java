@@ -69,6 +69,11 @@ public interface AnalyzedRelation extends AnalyzedStatement {
      * </p>
      */
     @Nullable
+    default Symbol getField(ColumnIdent column, Operation operation) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
+        return getField(column, operation, true);
+    }
+
+    @Nullable
     Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException;
 
     RelationName relationName();

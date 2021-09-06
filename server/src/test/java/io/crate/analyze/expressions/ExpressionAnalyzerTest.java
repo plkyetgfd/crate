@@ -138,8 +138,7 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
             paramTypeHints,
             new FullQualifiedNameFieldProvider(sources,
                                                ParentRelations.NO_PARENTS,
-                                               sessionContext.searchPath().currentSchema(),
-                                               sessionContext.errorOnUnknownObjectKey()),
+                                               sessionContext.searchPath().currentSchema()),
             null
         );
         Function andFunction = (Function) expressionAnalyzer.convert(

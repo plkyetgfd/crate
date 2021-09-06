@@ -167,7 +167,7 @@ public class AliasedAnalyzedRelation implements AnalyzedRelation, FieldResolver 
         }
         assert childColumnName != null
             : "If a ScopedSymbol has been retrieved via `getField`, it must be possible to get the columnIdent";
-        var result = relation.getField(childColumnName, Operation.READ, true);
+        var result = relation.getField(childColumnName, Operation.READ);
         if (result == null) {
             throw new IllegalArgumentException(field + " does not belong to " + relationName());
         }

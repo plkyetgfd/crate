@@ -735,8 +735,7 @@ public class SQLExecutor {
             new FullQualifiedNameFieldProvider(
                 sources.immutableMap(),
                 ParentRelations.NO_PARENTS,
-                sessionContext.searchPath().currentSchema(),
-                sessionContext.errorOnUnknownObjectKey()
+                sessionContext.searchPath().currentSchema()
             ),
             new SubqueryAnalyzer(
                 relAnalyzer,

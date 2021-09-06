@@ -142,11 +142,14 @@ class AlterTableAddColumnAnalyzer {
         }
 
         @Override
-        public Reference resolveField(QualifiedName qualifiedName, @Nullable List<String> path, Operation operation) {
+        public Reference resolveField(QualifiedName qualifiedName,
+                                      @Nullable List<String> path,
+                                      Operation operation,
+                                      boolean errorOnUnknownObjectKey) {
             try {
                 // SQL Semantics: CHECK expressions cannot refer to other
                 // columns to not invalidate existing data inadvertently.
-                Reference ref = referenceResolver.resolveField(qualifiedName, path, operation);
+                Reference ref = referenceResolver.resolveField(qualifiedName, path, operation, errorOnUnknownObjectKey);
                 throw new IllegalArgumentException(String.format(
                     Locale.ENGLISH,
                     "CHECK expressions defined in this context cannot refer to other columns: %s",

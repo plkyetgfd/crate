@@ -81,8 +81,7 @@ public class SqlExpressions {
             new FullQualifiedNameFieldProvider(
                 sources,
                 ParentRelations.NO_PARENTS,
-                coordinatorTxnCtx.sessionContext().searchPath().currentSchema(),
-                coordinatorTxnCtx.sessionContext().errorOnUnknownObjectKey()),
+                coordinatorTxnCtx.sessionContext().searchPath().currentSchema()),
             new SubqueryAnalyzer(
                 new RelationAnalyzer(nodeCtx, mock(Schemas.class)),
                 new StatementAnalysisContext(ParamTypeHints.EMPTY, Operation.READ, coordinatorTxnCtx)
