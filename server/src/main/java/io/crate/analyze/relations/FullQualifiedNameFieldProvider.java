@@ -113,7 +113,7 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
                         /* ex) CREATE TABLE c1 (obj object as (x int));
                          *     CREATE TABLE c2 (obj object as (y int));
                          *     select obj['x'] from c1, c2;
-                         *     --> ambiguous because with the ColumnUnknownException suppressed, c2.obj['x'] is a candidate as well.
+                         *     --> ambiguous because c2.obj['x'] is another candidate with errorOnUnknownObjectKey = false
                          */
                         return resolveField(qualifiedName, path, operation, true);
                     }
