@@ -132,7 +132,7 @@ class InsertAnalyzer {
             null,
             Operation.READ
         );
-        verifyOnConflictTargets(expressionAnalyzer, tableInfo, insert.duplicateKeyContext());
+        verifyOnConflictTargets(txnCtx, expressionAnalyzer, tableInfo, insert.duplicateKeyContext());
         Map<Reference, Symbol> onDuplicateKeyAssignments = processUpdateAssignments(
             tableRelation,
             targetColumns,
@@ -150,7 +150,7 @@ class InsertAnalyzer {
         if (insert.returningClause().isEmpty()) {
             returnValues = null;
         } else {
-            var exprCtx = new ExpressionAnalysisContext();
+            var exprCtx = new ExpressionAnalysisContext(txnCtx.sessionContext());
             Map<RelationName, AnalyzedRelation> sources = Map.of(tableRelation.relationName(), tableRelation);
             var sourceExprAnalyzer = new ExpressionAnalyzer(
                 txnCtx,
@@ -180,7 +180,8 @@ class InsertAnalyzer {
         );
     }
 
-    private static void verifyOnConflictTargets(ExpressionAnalyzer expressionAnalyzer,
+    private static void verifyOnConflictTargets(CoordinatorTxnCtx txnCtx,
+                                                ExpressionAnalyzer expressionAnalyzer,
                                                 DocTableInfo docTable,
                                                 Insert.DuplicateKeyContext<Expression> duplicateKeyContext) {
         List<Expression> constraintColumns = duplicateKeyContext.getConstraintColumns();
@@ -196,7 +197,7 @@ class InsertAnalyzer {
                     constraintColumns, pkColumnIdents));
         }
 
-        ExpressionAnalysisContext ctx = new ExpressionAnalysisContext();
+        ExpressionAnalysisContext ctx = new ExpressionAnalysisContext(txnCtx.sessionContext());
         List<Symbol> conflictTargets = Lists2.map(constraintColumns, x -> {
             try {
                 return expressionAnalyzer.convert(x, ctx);
@@ -320,7 +321,7 @@ class InsertAnalyzer {
             return Collections.emptyMap();
         }
 
-        ExpressionAnalysisContext exprCtx = new ExpressionAnalysisContext();
+        ExpressionAnalysisContext exprCtx = new ExpressionAnalysisContext(txnCtx.sessionContext());
         ValuesResolver valuesResolver = new ValuesResolver(targetCols);
         final FieldProvider<?> fieldProvider;
         if (duplicateKeyContext.getType() == Insert.DuplicateKeyContext.Type.ON_CONFLICT_DO_UPDATE_SET) {

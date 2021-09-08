@@ -76,7 +76,7 @@ final class DeleteAnalyzer {
             new SubqueryAnalyzer(relationAnalyzer, new StatementAnalysisContext(typeHints, Operation.READ, txnContext))
         );
         Symbol query = Objects.requireNonNullElse(
-            expressionAnalyzer.generateQuerySymbol(delete.getWhere(), new ExpressionAnalysisContext()),
+            expressionAnalyzer.generateQuerySymbol(delete.getWhere(), new ExpressionAnalysisContext(txnContext.sessionContext())),
             Literal.BOOLEAN_TRUE
         );
         query = maybeAliasedStatement.maybeMapFields(query);

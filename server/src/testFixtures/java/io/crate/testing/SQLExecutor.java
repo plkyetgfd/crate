@@ -742,8 +742,7 @@ public class SQLExecutor {
                 new StatementAnalysisContext(ParamTypeHints.EMPTY, Operation.READ, coordinatorTxnCtx)
             )
         );
-        ExpressionAnalysisContext expressionAnalysisContext = new ExpressionAnalysisContext();
-        expressionAnalysisContext.setErrorOnUnknownObjectKey(sessionContext.errorOnUnknownObjectKey());
+        ExpressionAnalysisContext expressionAnalysisContext = new ExpressionAnalysisContext(coordinatorTxnCtx.sessionContext());
         return expressionAnalyzer.convert(
             SqlParser.createExpression(expression), expressionAnalysisContext);
     }

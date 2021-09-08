@@ -39,8 +39,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.crate.exceptions.AmbiguousColumnException;
-import io.crate.exceptions.ColumnUnknownException;
 import org.joda.time.Period;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,7 +88,7 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
     @Before
     public void prepare() throws Exception {
         paramTypeHints = ParamTypeHints.EMPTY;
-        context = new ExpressionAnalysisContext();
+        context = new ExpressionAnalysisContext(SessionContext.systemSessionContext());
         executor = SQLExecutor.builder(clusterService)
             .addTable(T3.T1_DEFINITION)
             .addTable(T3.T2_DEFINITION)
@@ -177,28 +175,29 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void testNonDeterministicFunctionsAlwaysNew() throws Exception {
-        ExpressionAnalysisContext localContext = new ExpressionAnalysisContext();
+        CoordinatorTxnCtx txnCtx = CoordinatorTxnCtx.systemTransactionContext();
+        ExpressionAnalysisContext localContext = new ExpressionAnalysisContext(txnCtx.sessionContext());
         String functionName = CoalesceFunction.NAME;
         Symbol fn1 = ExpressionAnalyzer.allocateFunction(
             functionName,
             List.of(Literal.BOOLEAN_FALSE),
             null,
             localContext,
-            CoordinatorTxnCtx.systemTransactionContext(),
+            txnCtx,
             expressions.nodeCtx);
             Symbol fn2 = ExpressionAnalyzer.allocateFunction(
             functionName,
             List.of(Literal.BOOLEAN_FALSE),
             null,
             localContext,
-            CoordinatorTxnCtx.systemTransactionContext(),
+            txnCtx,
             expressions.nodeCtx);
         Symbol fn3 = ExpressionAnalyzer.allocateFunction(
             functionName,
             List.of(Literal.BOOLEAN_TRUE),
             null,
             localContext,
-            CoordinatorTxnCtx.systemTransactionContext(),
+            txnCtx,
             expressions.nodeCtx);
 
         // different instances
