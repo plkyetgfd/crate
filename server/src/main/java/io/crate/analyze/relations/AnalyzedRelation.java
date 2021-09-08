@@ -25,8 +25,8 @@ import io.crate.analyze.AnalyzedStatement;
 import io.crate.analyze.AnalyzedStatementVisitor;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
-import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.Symbol;
+import io.crate.expression.symbol.VoidReference;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
 import io.crate.metadata.table.Operation;
@@ -66,15 +66,24 @@ public interface AnalyzedRelation extends AnalyzedStatement {
      *  <ul>
      *  <li>They can support implicit column creation. In that case a `DynamicReference` is returned.</li>
      *  <li>They can return `Reference` symbols for subscripts; In that case on the `topLevel` part of the column appears in the `output`</li>
+     *  </ul>
+     * </p>
+     * <p>
+     * There are two versions of getField methods parametrized by errorOnUnknownObjectKey(boolean).
+     * errorOnUnknownObjectKey is used for analysis so that the version without can be used if the provided column has already been analyzed.
+     * </p>
+     * <p>
+     * To elaborate further, as the name suggests, unless the column is an object's unknown sub-column that {@link VoidReference}
+     * is expected to be returned, it is safe to use the version without errorOnUnknownObjectKey.
      * </p>
      */
     @Nullable
-    default Symbol getField(ColumnIdent column, Operation operation) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
-        return getField(column, operation, true);
-    }
+    Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnsupportedOperationException;
 
     @Nullable
-    Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException;
+    default Symbol getField(ColumnIdent column, Operation operation) throws AmbiguousColumnException, ColumnUnknownException, UnsupportedOperationException {
+        return getField(column, operation, true);
+    }
 
     RelationName relationName();
 

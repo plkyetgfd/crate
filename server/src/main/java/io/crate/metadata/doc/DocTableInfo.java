@@ -24,9 +24,9 @@ package io.crate.metadata.doc;
 import io.crate.action.sql.SessionContext;
 import io.crate.analyze.WhereClause;
 import io.crate.exceptions.ColumnUnknownException;
-import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.DynamicReference;
 import io.crate.expression.symbol.Symbol;
+import io.crate.expression.symbol.VoidReference;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.GeneratedReference;
 import io.crate.metadata.IndexReference;
@@ -409,7 +409,7 @@ public class DocTableInfo implements TableInfo, ShardedTable, StoredTable {
     @Nullable
     public DynamicReference getDynamic(ColumnIdent ident,
                                        boolean forWrite,
-                                       boolean errorOnUnknownObjectKey) throws UnknownObjectKeyExceptionalControlFlow {
+                                       boolean errorOnUnknownObjectKey) {
         boolean parentIsIgnored = false;
         ColumnPolicy parentPolicy = columnPolicy();
         int position = 0;
@@ -436,13 +436,15 @@ public class DocTableInfo implements TableInfo, ShardedTable, StoredTable {
             case DYNAMIC:
                 if (!forWrite) {
                     if (!errorOnUnknownObjectKey) {
-                        throw new UnknownObjectKeyExceptionalControlFlow(ident.sqlFqn());
+                        return new VoidReference(new ReferenceIdent(ident(), ident), rowGranularity(), position);
                     }
                     return null;
                 }
                 break;
             case STRICT:
-                if (forWrite) throw new ColumnUnknownException(ident.sqlFqn(), ident());
+                if (forWrite) {
+                    throw new ColumnUnknownException(ident.sqlFqn(), ident());
+                }
                 return null;
             case IGNORED:
                 parentIsIgnored = true;

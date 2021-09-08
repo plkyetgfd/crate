@@ -20,22 +20,36 @@
  * agreement.
  */
 
-package io.crate.exceptions;
+package io.crate.expression.symbol;
 
-import java.util.Locale;
+import io.crate.metadata.ReferenceIdent;
+import io.crate.metadata.RowGranularity;
+import io.crate.sql.tree.ColumnPolicy;
+import org.elasticsearch.common.io.stream.StreamInput;
 
-/**
- * This is not a traditional exception, but is an exception as control flow that is used during subscript expression analyses.
- * Thrown from Tableinfo.getDynamics and caught by FullQualifiedNameFieldProvider.getField for instant stack unwinding.
- */
-public class UnknownObjectKeyExceptionalControlFlow extends RuntimeException implements CrateException {
+import java.io.IOException;
 
-    public UnknownObjectKeyExceptionalControlFlow(String columnName) {
-        super(String.format(Locale.ENGLISH, "Column %s unknown", columnName));
+public class VoidReference extends DynamicReference {
+
+    public VoidReference(StreamInput in) throws IOException {
+        super(in);
+    }
+
+    public VoidReference(ReferenceIdent ident,
+                         RowGranularity granularity,
+                         int position) {
+        super(ident, granularity, position);
+    }
+
+    public VoidReference(ReferenceIdent ident,
+                         RowGranularity granularity,
+                         ColumnPolicy columnPolicy,
+                         int position) {
+        super(ident, granularity, columnPolicy, position);
     }
 
     @Override
-    public <C, R> R accept(CrateExceptionVisitor<C, R> exceptionVisitor, C context) {
-        return exceptionVisitor.visitCrateException(this, context);
+    public SymbolType symbolType() {
+        return SymbolType.VOID_REFERENCE;
     }
 }

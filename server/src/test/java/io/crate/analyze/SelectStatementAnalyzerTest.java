@@ -93,6 +93,7 @@ import static io.crate.testing.SymbolMatchers.isField;
 import static io.crate.testing.SymbolMatchers.isFunction;
 import static io.crate.testing.SymbolMatchers.isLiteral;
 import static io.crate.testing.SymbolMatchers.isReference;
+import static io.crate.testing.SymbolMatchers.isVoidReference;
 import static io.crate.testing.TestingHelpers.isSQL;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anyOf;
@@ -2719,10 +2720,10 @@ public class SelectStatementAnalyzerTest extends CrateDummyClusterServiceUnitTes
         executor.getSessionContext().setErrorOnUnknownObjectKey(false);
         var analyzed = executor.analyze("select obj['u'] from tbl");
         assertThat(analyzed.outputs().size(), is(1));
-        assertThat(analyzed.outputs().get(0), isAlias("obj['u']", isLiteral(null)));
+        assertThat(analyzed.outputs().get(0), isVoidReference("obj['u']"));
         analyzed = executor.analyze("select obj_n['obj_n2']['u'] from tbl");
         assertThat(analyzed.outputs().size(), is(1));
-        assertThat(analyzed.outputs().get(0), isAlias("obj_n['obj_n2']['u']", isLiteral(null)));
+        assertThat(analyzed.outputs().get(0), isVoidReference("obj_n['obj_n2']['u']"));
     }
 
     @Test
@@ -2779,7 +2780,7 @@ public class SelectStatementAnalyzerTest extends CrateDummyClusterServiceUnitTes
         executor.getSessionContext().setErrorOnUnknownObjectKey(false);
         analyzed = executor.analyze("select (obj).y from tbl");
         assertThat(analyzed.outputs().size(), is(1));
-        assertThat(analyzed.outputs().get(0), isAlias("obj['y']", isLiteral(null)));
+        assertThat(analyzed.outputs().get(0), isVoidReference("obj['y']"));
 
         /*
          * select ('{}'::object).x; --> ColumnUnknownException
@@ -2991,7 +2992,7 @@ public class SelectStatementAnalyzerTest extends CrateDummyClusterServiceUnitTes
         executor.getSessionContext().setErrorOnUnknownObjectKey(false);
         analyzed = executor.analyze("select obj_dy['missing_key'] from (select obj_dy from e1) alias");
         assertThat(analyzed.outputs().size(), is(1));
-        assertThat(analyzed.outputs().get(0), isAlias("obj_dy['missing_key']", isLiteral(null)));
+        assertThat(analyzed.outputs().get(0), isVoidReference("obj_dy['missing_key']"));
         analyzed = executor.analyze("select obj_st['missing_key'] from (select obj_st from e1) alias");
         assertThat(analyzed.outputs().size(), is(1));
         assertThat(analyzed.outputs().get(0), isFunction("subscript", isField("obj_st"), isLiteral("missing_key")));

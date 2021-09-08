@@ -24,9 +24,6 @@ package io.crate.analyze.relations;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.RelationUnknown;
-import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
-import io.crate.expression.symbol.AliasSymbol;
-import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
@@ -100,13 +97,7 @@ public class FullQualifiedNameFieldProvider implements FieldProvider<Symbol> {
             tableNameMatched = true;
 
             AnalyzedRelation sourceRelation = entry.getValue();
-            Symbol newField;
-            try {
-                newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
-            } catch (UnknownObjectKeyExceptionalControlFlow e) {
-                assert errorOnUnknownObjectKey == false : "errorOnUnknownObjectKey should not be true";
-                newField = new AliasSymbol(columnIdent.toString(), Literal.NULL);
-            }
+            Symbol newField = sourceRelation.getField(columnIdent, operation, errorOnUnknownObjectKey);
             if (newField != null) {
                 if (lastField != null) {
                     if (errorOnUnknownObjectKey == false) {

@@ -25,7 +25,6 @@ import io.crate.common.annotations.VisibleForTesting;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.exceptions.ColumnValidationException;
-import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.GeneratedReference;
 import io.crate.metadata.Reference;
@@ -64,7 +63,7 @@ public class DocTableRelation extends AbstractTableRelation<DocTableInfo> {
 
     @Override
     public Reference getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey)
-        throws AmbiguousColumnException, ColumnUnknownException, UnknownObjectKeyExceptionalControlFlow, UnsupportedOperationException {
+            throws AmbiguousColumnException, ColumnUnknownException, UnsupportedOperationException {
         if (operation == Operation.UPDATE) {
             ensureColumnCanBeUpdated(column);
         }

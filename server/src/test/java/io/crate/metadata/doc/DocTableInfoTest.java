@@ -22,8 +22,8 @@
 package io.crate.metadata.doc;
 
 import io.crate.exceptions.ColumnUnknownException;
-import io.crate.exceptions.UnknownObjectKeyExceptionalControlFlow;
 import io.crate.expression.symbol.DynamicReference;
+import io.crate.expression.symbol.VoidReference;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.Reference;
 import io.crate.metadata.ReferenceIdent;
@@ -105,11 +105,10 @@ public class DocTableInfoTest extends ESTestCase {
         assertSame(reference.valueType(), DataTypes.UNDEFINED);
 
         // forWrite: false, errorOnUnknownObjectKey: false, parentPolicy: dynamic
-        Asserts.assertThrowsMatches(
-            () -> info.getDynamic(col, false, false),
-            UnknownObjectKeyExceptionalControlFlow.class,
-            "Column o['foobar'] unknown"
-        );
+        reference = info.getDynamic(col, false, false);
+        assertNotNull(reference);
+        assertTrue(reference instanceof VoidReference);
+        assertSame(reference.valueType(), DataTypes.UNDEFINED);
     }
 
     @Test
