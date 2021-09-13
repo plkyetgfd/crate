@@ -44,7 +44,6 @@ public enum SymbolType {
     LITERAL(Literal::new),
     INPUT_COLUMN(InputColumn::new),
     DYNAMIC_REFERENCE(DynamicReference::new),
-    VOID_REFERENCE(VoidReference::new),
     MATCH_PREDICATE(null),
     FETCH_REFERENCE(null),
     INDEX_REFERENCE(IndexReference::new),
@@ -58,7 +57,8 @@ public enum SymbolType {
     ALIAS(AliasSymbol::new),
     FETCH_STUB(in -> {
         throw new UnsupportedEncodingException("FetchStub is not streamable");
-    });
+    }),
+    VOID_REFERENCE(VoidReference::new);
 
     public static final List<SymbolType> VALUES = List.of(values());
 

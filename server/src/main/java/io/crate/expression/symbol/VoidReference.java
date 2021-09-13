@@ -29,6 +29,9 @@ import org.elasticsearch.common.io.stream.StreamInput;
 
 import java.io.IOException;
 
+/**
+ * A reference to a column which does not exist. This is primarily used for object columns where lookups like `some_column['nested_column']` are allowed if the session `error_on_unknown_object_key` setting is set to false.
+ **/
 public class VoidReference extends DynamicReference {
 
     public VoidReference(StreamInput in) throws IOException {

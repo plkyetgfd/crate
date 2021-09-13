@@ -36,15 +36,6 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
     public void testEvaluate() throws Exception {
         assertEvaluate("subscript_obj({x=10}, 'x')", 10);
         assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'x'), 'y')", 10);
-
-        sqlExpressions.setErrorOnUnknownObjectKey(true);
-        Asserts.assertThrowsMatches(
-            () -> assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null),
-            ColumnUnknownException.class,
-            "The object `{x={y=10}}` does not contain the key `y`"
-        );
-        sqlExpressions.setErrorOnUnknownObjectKey(false);
-        assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null);
     }
 
     @Test
@@ -52,15 +43,6 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
         assertNormalize("{\"x\" = 'test'}['x']", isLiteral("test"));
         assertNormalize("{\"x\" = { \"y\" = 'test'}}['x']['y']", isLiteral("test"));
         assertNormalize("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['y']['z']", isLiteral("test"));
-
-        sqlExpressions.setErrorOnUnknownObjectKey(true);
-        Asserts.assertThrowsMatches(
-            () -> assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null),
-            ColumnUnknownException.class,
-            "The object `{y={z=test}}` does not contain the key `x`"
-        );
-        sqlExpressions.setErrorOnUnknownObjectKey(false);
-        assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null);
     }
 
     @Test
@@ -97,5 +79,27 @@ public class SubscriptObjectFunctionTest extends ScalarTestCase {
     @Test
     public void test_subscript_obj_with_null_child() throws Exception {
         assertEvaluate("subscript_obj({x=null}, 'x', 'y')", null);
+    }
+
+    @Test
+    public void testEvaluateNestedObjectWithUnknownObjectkeysWithSessionSetting() throws Exception {
+        // missing key in the very front
+        sqlExpressions.setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null),
+            ColumnUnknownException.class,
+            "The object `{x={y=10}}` does not contain the key `y`"
+        );
+        sqlExpressions.setErrorOnUnknownObjectKey(false);
+        assertEvaluate("subscript_obj(subscript_obj({x={y=10}}, 'y'), 'y')", null);
+        // missing key in the middle
+        sqlExpressions.setErrorOnUnknownObjectKey(true);
+        Asserts.assertThrowsMatches(
+            () -> assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null),
+            ColumnUnknownException.class,
+            "The object `{y={z=test}}` does not contain the key `x`"
+        );
+        sqlExpressions.setErrorOnUnknownObjectKey(false);
+        assertEvaluate("{\"x\" = {\"y\" = {\"z\" = 'test'}}}['x']['x']['z']", null);
     }
 }

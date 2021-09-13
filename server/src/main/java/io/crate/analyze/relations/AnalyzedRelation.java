@@ -26,7 +26,6 @@ import io.crate.analyze.AnalyzedStatementVisitor;
 import io.crate.exceptions.AmbiguousColumnException;
 import io.crate.exceptions.ColumnUnknownException;
 import io.crate.expression.symbol.Symbol;
-import io.crate.expression.symbol.VoidReference;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
 import io.crate.metadata.table.Operation;
@@ -68,18 +67,14 @@ public interface AnalyzedRelation extends AnalyzedStatement {
      *  <li>They can return `Reference` symbols for subscripts; In that case on the `topLevel` part of the column appears in the `output`</li>
      *  </ul>
      * </p>
-     * <p>
-     * There are two versions of getField methods parametrized by errorOnUnknownObjectKey(boolean).
-     * errorOnUnknownObjectKey is used for analysis so that the version without can be used if the provided column has already been analyzed.
-     * </p>
-     * <p>
-     * To elaborate further, as the name suggests, unless the column is an object's unknown sub-column that {@link VoidReference}
-     * is expected to be returned, it is safe to use the version without errorOnUnknownObjectKey.
-     * </p>
      */
     @Nullable
     Symbol getField(ColumnIdent column, Operation operation, boolean errorOnUnknownObjectKey) throws AmbiguousColumnException, ColumnUnknownException, UnsupportedOperationException;
 
+    /**
+     * Like {@link #getField(ColumnIdent, Operation, boolean)}
+     * This version sets `errorOnUnknownObjectKey` to true and is for cases where the `ColumnIdent` is derived from a `Symbol` that was previously already analyzed and retrieved via `getField`.
+     **/
     @Nullable
     default Symbol getField(ColumnIdent column, Operation operation) throws AmbiguousColumnException, ColumnUnknownException, UnsupportedOperationException {
         return getField(column, operation, true);
