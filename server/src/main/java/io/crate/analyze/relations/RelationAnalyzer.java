@@ -91,6 +91,7 @@ import io.crate.sql.tree.ValuesList;
 import io.crate.types.ArrayType;
 import io.crate.types.DataType;
 import io.crate.types.DataTypes;
+import io.crate.types.ObjectType;
 import io.crate.types.RowType;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
@@ -232,7 +233,8 @@ public class RelationAnalyzer extends DefaultTraversalVisitor<AnalyzedRelation, 
         for (int i = 0; i < leftOutputs.size(); i++) {
             var leftType = leftOutputs.get(i).valueType();
             var rightType = rightOutputs.get(i).valueType();
-            if (!DataTypes.isSameType(leftType, rightType)) {
+            if (!DataTypes.isSameType(leftType, rightType) ||
+                leftType.id() == ObjectType.ID && !ObjectType.isCompatibleType((ObjectType) leftType, (ObjectType) rightType)) {
                 throw new UnsupportedOperationException(
                     "Corresponding output columns at position: " + (i + 1) +
                     " must be compatible for all parts of a UNION");

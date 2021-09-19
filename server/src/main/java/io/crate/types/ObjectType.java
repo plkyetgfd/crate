@@ -23,6 +23,7 @@ package io.crate.types;
 
 import static io.crate.types.DataTypes.ALLOWED_CONVERSIONS;
 import static io.crate.types.DataTypes.UNDEFINED;
+import static io.crate.types.DataTypes.isSameType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,6 +77,25 @@ public class ObjectType extends DataType<Map<String, Object>> implements Streame
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static boolean isCompatibleType(ObjectType left, ObjectType right) {
+        // compatible here means that left and right are valid candidates for union-all such that
+        // if the names are the same, the types should be the same.
+        for (var e : left.innerTypes().entrySet()) {
+            var lInner = e.getValue(); // never null
+            var rInner = right.innerTypes().get(e.getKey());
+            if (rInner == null) {
+                continue;
+            }
+            if (!isSameType(lInner, rInner)) {
+                return false;
+            }
+            if (lInner.id() == ObjectType.ID && !isCompatibleType((ObjectType) lInner, (ObjectType) rInner)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private final Map<String, DataType<?>> innerTypes;

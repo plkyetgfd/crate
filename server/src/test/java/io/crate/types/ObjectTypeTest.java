@@ -184,4 +184,66 @@ public class ObjectTypeTest extends ESTestCase {
             .build();
         assertThat(objectType.getTypeSignature().createType(), is(objectType));
     }
+
+    @Test
+    public void test_is_compatible_type_with_same_names_different_inner_types() {
+        ObjectType obj1 = ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build();
+        ObjectType obj2 = ObjectType.builder().setInnerType("a", DataTypes.STRING).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(false));
+    }
+
+    @Test
+    public void test_is_compatible_type_with_same_names_same_inner_types() {
+        ObjectType obj1 = ObjectType.builder().setInnerType("a", DataTypes.STRING).build();
+        ObjectType obj2 = ObjectType.builder().setInnerType("a", DataTypes.STRING).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(true));
+    }
+
+    @Test
+    public void test_is_compatible_type_with_different_names_same_inner_types() {
+        ObjectType obj1 = ObjectType.builder().setInnerType("a", DataTypes.STRING).build();
+        ObjectType obj2 = ObjectType.builder().setInnerType("b", DataTypes.STRING).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(true));
+    }
+
+    @Test
+    public void test_is_compatible_type_on_nested_types_with_same_names_same_inner_types() {
+        ObjectType obj1 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        ObjectType obj2 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(true));
+    }
+
+    @Test
+    public void test_is_compatible_type_on_nested_types_with_same_names_different_inner_types() {
+        ObjectType obj1 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        ObjectType obj2 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("a", DataTypes.STRING).build()).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(false));
+    }
+
+    @Test
+    public void test_is_compatible_type_on_nested_types_with_different_names_same_inner_types() {
+        ObjectType obj1 = ObjectType.builder()
+            .setInnerType("obj1",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        ObjectType obj2 = ObjectType.builder()
+            .setInnerType("obj2",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        assertThat(ObjectType.isCompatibleType(obj1, obj2), is(true));
+
+        ObjectType obj3 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("a", DataTypes.INTEGER).build()).build();
+        ObjectType obj4 = ObjectType.builder()
+            .setInnerType("obj",
+                          ObjectType.builder().setInnerType("b", DataTypes.INTEGER).build()).build();
+        assertThat(ObjectType.isCompatibleType(obj3, obj4), is(true));
+    }
 }
